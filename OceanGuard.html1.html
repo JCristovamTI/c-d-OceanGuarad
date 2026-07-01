@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OceanGuard — Preservação Marinha (ODS 14) Standalone</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        oceanDark: '#020912',
+                        oceanDeep: '#051425',
+                        oceanLight: '#7eb3e2',
+                        accentAqua: '#4ed2d2',
+                        accentGreen: '#10b981',
+                        accentCoral: '#f43f5e',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'Fira Code', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- React & ReactDOM (Production) -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <!-- Babel standalone for JSX compiling in browser -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #020912;
+            overflow-x: hidden;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #020912;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #0d345c;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4ed2d2;
+        }
+        .animate-spin-slow {
+            animation: spin 12s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="text-gray-200 min-h-screen flex flex-col justify-between">
+
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // --- PRESET DATA ---
+        const INITIAL_BEACHES = [
+            { id: 'b1', name: 'Praia da Joaquina', city: 'Florianópolis', latitude: -27.6292, longitude: -48.4485, status: 'PROPRIA', lastAnalysis: '2026-06-28', paramEColi: 120 },
+            { id: 'b2', name: 'Praia de Canasvieiras', city: 'Florianópolis', latitude: -27.4265, longitude: -48.4632, status: 'IMPROPRIA', lastAnalysis: '2026-06-28', paramEColi: 1800 },
+            { id: 'b3', name: 'Praia Mole', city: 'Florianópolis', latitude: -27.6015, longitude: -48.4375, status: 'PROPRIA', lastAnalysis: '2026-06-28', paramEColi: 80 },
+            { id: 'b4', name: 'Beira Mar Norte (Trapiche)', city: 'Florianópolis', latitude: -27.5855, longitude: -48.5520, status: 'IMPROPRIA', lastAnalysis: '2026-06-27', paramEColi: 2400 },
+            { id: 'b5', name: 'Praia do Campeche', city: 'Florianópolis', latitude: -27.6835, longitude: -48.4815, status: 'PROPRIA', lastAnalysis: '2026-06-28', paramEColi: 45 }
+        ];
+
+        const INITIAL_ZONES = [
+            {
+                id: 'z1',
+                name: 'Berçário de Camarões - Lagoa da Conceição',
+                type: 'BERCARIO',
+                description: 'Área de reprodução de camarão-rosa. Pesca proibida de qualquer modalidade de arrasto ou rede de malha fina.',
+                polygon: [
+                    { lat: -27.5800, lng: -48.4700 },
+                    { lat: -27.5800, lng: -48.4500 },
+                    { lat: -27.6100, lng: -48.4500 },
+                    { lat: -27.6100, lng: -48.4700 }
+                ],
+                center: { lat: -27.5950, lng: -48.4600 },
+                radius: 1200,
+                active: true
+            },
+            {
+                id: 'z2',
+                name: 'Reserva Biológica Marinha do Arvoredo',
+                type: 'PROTECAO_AMBIENTAL',
+                description: 'Reserva de proteção integral. Mergulho turístico controlado, proibida qualquer modalidade de pesca, caça ou coleta.',
+                polygon: [
+                    { lat: -27.2700, lng: -48.3800 },
+                    { lat: -27.2700, lng: -48.3300 },
+                    { lat: -27.3200, lng: -48.3300 },
+                    { lat: -27.3200, lng: -48.3800 }
+                ],
+                center: { lat: -27.2950, lng: -48.3550 },
+                radius: 4000,
+                active: true
+            },
+            {
+                id: 'z3',
+                name: 'Zona de Pesca Artesanal Controlada - Campeche',
+                type: 'PESCA_CONTROLADA',
+                description: 'Área de captura tradicional da tainha (pesca de cerco de praia). Tráfego de embarcações motorizadas restrito durante a safra (maio a julho).',
+                polygon: [
+                    { lat: -27.6600, lng: -48.4900 },
+                    { lat: -27.6600, lng: -48.4600 },
+                    { lat: -27.7100, lng: -48.4600 },
+                    { lat: -27.7100, lng: -48.4900 }
+                ],
+                center: { lat: -27.6850, lng: -48.4750 },
+                radius: 2000,
+                active: true
+            }
+        ];
+
+        const INITIAL_REPORTS = [
+            {
+                id: 'd1',
+                title: 'Mancha escura na foz do canal',
+                description: 'Possível descarte clandestino de esgoto doméstico direto no canal que drena para a praia de Canasvieiras. Odor forte de esgoto no local.',
+                category: 'ESGOTO',
+                latitude: -27.4280,
+                longitude: -48.4610,
+                photoUrl: 'https://images.unsplash.com/photo-1611273426858-450d8e3c9fce?auto=format&fit=crop&w=400&q=80',
+                status: 'CONFIRMADO',
+                timestamp: '2026-06-29T10:30:00Z',
+                aiAnalysis: {
+                    severity: 'ALTA',
+                    classification: 'Efluente sanitário não tratado em zona balnear',
+                    mitigationSuggestion: 'Isolamento imediato do trecho de praia em um raio de 50m. Instalar barreiras físicas temporárias.',
+                    impactAnalysis: 'Grave risco à saúde humana (gastroenterite, hepatite A) e estresse por eutrofização rápida da água.',
+                    suggestedAction: 'Acionar Secretaria Municipal de Saneamento'
+                }
+            },
+            {
+                id: 'd2',
+                title: 'Lixo flutuante acumulado na enseada',
+                description: 'Muitas garrafas plásticas, sacolas e restos de isopor flutuando perto da área de costão rochoso na Lagoa. Perigo para tartarugas marinhas.',
+                category: 'LIXO',
+                latitude: -27.5950,
+                longitude: -48.4550,
+                photoUrl: 'https://images.unsplash.com/photo-1618477388954-7852f32655ec?auto=format&fit=crop&w=400&q=80',
+                status: 'ANALISANDO',
+                timestamp: '2026-06-30T14:15:00Z',
+                aiAnalysis: {
+                    severity: 'MEDIA',
+                    classification: 'Concentração de resíduos sólidos flutuantes (macroplásticos)',
+                    mitigationSuggestion: 'Organizar mutirão voluntário de coleta no costão e instalar rede flutuante.',
+                    impactAnalysis: 'Risco de asfixia e ingestão acidental por tartarugas marinhas.',
+                    suggestedAction: 'Notificar Comcap (Limpeza Urbana)'
+                }
+            }
+        ];
+
+        const POLLUTION_PRESETS = [
+            {
+                name: 'Derramamento de Óleo (Petróleo)',
+                category: 'OLEO',
+                url: 'https://images.unsplash.com/photo-1535139262971-c3f8457091c8?auto=format&fit=crop&w=600&q=80',
+                description: 'Mancha escura oleosa cobrindo as rochas e água, matando caranguejos e grudando na areia da praia.'
+            },
+            {
+                name: 'Descarte de Lixo Plástico',
+                category: 'LIXO',
+                url: 'https://images.unsplash.com/photo-1618477388954-7852f32655ec?auto=format&fit=crop&w=600&q=80',
+                description: 'Dezenas de garrafas pet, copos de isopor, sacolas plásticas e pedaços de rede de pesca acumulados no costão.'
+            },
+            {
+                name: 'Esgoto / Efluente Químico',
+                category: 'ESGOTO',
+                url: 'https://images.unsplash.com/photo-1611273426858-450d8e3c9fce?auto=format&fit=crop&w=600&q=80',
+                description: 'Esgoto escuro com espuma branca com forte odor de amônia saindo do duto pluvial direto na areia.'
+            },
+            {
+                name: 'Pesca de Arrastão em Berçário',
+                category: 'PESCA_ILEGAL',
+                url: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=600&q=80',
+                description: 'Embarcação de médio porte operando pesca de arrasto de fundo dentro das boias de marcação do berçário protegido.'
+            }
+        ];
+
+        // --- INTERACTIVE MAP COMPONENT ---
+        function InteractiveMap({
+            currentLocation,
+            onLocationChange,
+            beaches,
+            zones,
+            reports,
+            showBeaches,
+            showZones,
+            showReports,
+            onSelectBeach,
+            onSelectZone,
+            onSelectReport,
+            onMapDoubleClick
+        }) {
+            const [zoom, setZoom] = useState(1.3);
+            const [pan, setPan] = useState({ x: 0, y: 0 });
+            const [isDragging, setIsDragging] = useState(false);
+            const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+            const containerRef = useRef(null);
+
+            const BOUNDS = { minLat: -27.7500, maxLat: -27.4000, minLng: -48.6200, maxLng: -48.3800 };
+
+            const geoToMapPercent = (lat, lng) => {
+                const x = ((lng - BOUNDS.minLng) / (BOUNDS.maxLng - BOUNDS.minLng)) * 100;
+                const y = ((BOUNDS.maxLat - lat) / (BOUNDS.maxLat - BOUNDS.minLat)) * 100;
+                return { x, y };
+            };
+
+            const mapPercentToGeo = (pctX, pctY) => {
+                const lng = BOUNDS.minLng + (pctX / 100) * (BOUNDS.maxLng - BOUNDS.minLng);
+                const lat = BOUNDS.maxLat - (pctY / 100) * (BOUNDS.maxLat - BOUNDS.minLat);
+                return { lat: parseFloat(lat.toFixed(5)), lng: parseFloat(lng.toFixed(5)) };
+            };
+
+            const handleMouseDown = (e) => {
+                if (e.button !== 0) return;
+                setIsDragging(true);
+                setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+            };
+
+            const handleMouseMove = (e) => {
+                if (!isDragging) return;
+                setPan({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y });
+            };
+
+            const handleMouseUp = () => setIsDragging(false);
+
+            const handleMapClick = (e) => {
+                if (Math.abs(pan.x - (e.clientX - dragStart.x)) > 5 || Math.abs(pan.y - (e.clientY - dragStart.y)) > 5) return;
+                if (!containerRef.current) return;
+                const rect = containerRef.current.getBoundingClientRect();
+                const clickX = e.clientX - rect.left - rect.width / 2 - pan.x;
+                const clickY = e.clientY - rect.top - rect.height / 2 - pan.y;
+                const mapSize = 1000 * zoom;
+                const pctX = ((clickX + mapSize / 2) / mapSize) * 100;
+                const pctY = ((clickY + mapSize / 2) / mapSize) * 100;
+
+                if (pctX >= 0 && pctX <= 100 && pctY >= 0 && pctY <= 100) {
+                    onLocationChange(mapPercentToGeo(pctX, pctY));
+                }
+            };
+
+            const handleDoubleClick = (e) => {
+                if (!containerRef.current) return;
+                const rect = containerRef.current.getBoundingClientRect();
+                const clickX = e.clientX - rect.left - rect.width / 2 - pan.x;
+                const clickY = e.clientY - rect.top - rect.height / 2 - pan.y;
+                const mapSize = 1000 * zoom;
+                const pctX = ((clickX + mapSize / 2) / mapSize) * 100;
+                const pctY = ((clickY + mapSize / 2) / mapSize) * 100;
+
+                if (pctX >= 0 && pctX <= 100 && pctY >= 0 && pctY <= 100) {
+                    onMapDoubleClick(mapPercentToGeo(pctX, pctY));
+                }
+            };
+
+            const userPos = geoToMapPercent(currentLocation.lat, currentLocation.lng);
+
+            return (
+                <div 
+                    ref={containerRef}
+                    onMouseDown={handleMouseDown}
+                    onMouseMove={handleMouseMove}
+                    onMouseUp={handleMouseUp}
+                    onMouseLeave={handleMouseUp}
+                    onDoubleClick={handleDoubleClick}
+                    onClick={handleMapClick}
+                    className="relative w-full h-full bg-[#041527] overflow-hidden rounded-2xl border border-[#0d345c] cursor-grab active:cursor-grabbing select-none"
+                >
+                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_#08223d_0%,_#041527_100%)] opacity-80 pointer-events-none" />
+                    <div className="absolute inset-0 bg-[linear-gradient(rgba(13,52,92,0.1)_1px,_transparent_1px),_linear-gradient(90deg,_rgba(13,52,92,0.1)_1px,_transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
+
+                    <div className="absolute top-4 left-4 flex items-center gap-2 bg-[#081e36]/90 border border-[#0d345c] text-accentAqua px-3 py-1 rounded-full text-[10px] font-mono z-10">
+                        <i data-lucide="compass" class="w-3 h-3 animate-spin-slow"></i>
+                        <span>RADAR STANDALONE — ATIVO</span>
+                    </div>
+
+                    <div className="absolute bottom-4 left-4 bg-[#081e36]/90 border border-[#0d345c] text-oceanLight px-3 py-1.5 rounded-lg text-[9px] font-mono flex flex-col z-10">
+                        <span>LAT: <strong className="text-accentAqua">{currentLocation.lat.toFixed(5)}°S</strong></span>
+                        <span>LNG: <strong className="text-accentAqua">{currentLocation.lng.toFixed(5)}°W</strong></span>
+                    </div>
+
+                    <div className="absolute right-4 top-4 flex flex-col gap-2 z-10">
+                        <button onClick={() => setZoom(z => Math.min(z + 0.3, 4))} className="p-2 bg-[#081e36] hover:bg-[#0c2a4c] border border-[#0d345c] text-accentAqua rounded-lg"><i data-lucide="zoom-in" class="w-4 h-4"></i></button>
+                        <button onClick={() => setZoom(z => Math.max(z - 0.3, 0.8))} className="p-2 bg-[#081e36] hover:bg-[#0c2a4c] border border-[#0d345c] text-accentAqua rounded-lg"><i data-lucide="zoom-out" class="w-4 h-4"></i></button>
+                        <button onClick={() => { setZoom(1.4); setPan({ x: 0, y: 0 }); }} className="p-1.5 bg-[#081e36] hover:bg-[#0c2a4c] border border-[#0d345c] text-accentAqua text-[9px] font-mono rounded-lg">RESET</button>
+                    </div>
+
+                    <div 
+                        style={{
+                            transform: `translate(${pan.x}px, ${pan.y}px)`,
+                            width: `${1000 * zoom}px`,
+                            height: `${1000 * zoom}px`,
+                            position: 'absolute',
+                            top: '50%',
+                            left: '50%',
+                            marginTop: `-${500 * zoom}px`,
+                            marginLeft: `-${500 * zoom}px`,
+                            transition: isDragging ? 'none' : 'transform 0.15s ease-out'
+                        }}
+                        className="relative pointer-events-none"
+                    >
+                        {/* Florianópolis Contour Shape */}
+                        <svg viewBox="0 0 100 100" className="w-full h-full opacity-30">
+                            <path 
+                                d="M 50,15 C 55,20 53,30 54,35 C 56,42 61,45 59,52 C 58,58 52,62 50,68 C 48,74 53,82 50,90 C 47,88 45,80 43,76 C 41,72 38,68 40,64 C 42,60 45,56 46,50 C 47,44 42,40 44,32 C 46,24 45,18 50,15 Z" 
+                                fill="#09345e" stroke="#124c82" strokeWidth="0.5" strokeDasharray="0.1 0.1"
+                            />
+                        </svg>
+
+                        {/* Exclusion Zones */}
+                        {showZones && zones.map(zone => {
+                            const center = geoToMapPercent(zone.center.lat, zone.center.lng);
+                            const style = zone.type === 'BERCARIO' 
+                                ? { fill: 'rgba(244, 63, 94, 0.12)', stroke: '#f43f5e' } 
+                                : { fill: 'rgba(249, 115, 22, 0.1)', stroke: '#f97316' };
+
+                            return (
+                                <div key={zone.id} className="absolute inset-0 pointer-events-none">
+                                    <div 
+                                        style={{
+                                            position: 'absolute',
+                                            width: '100%',
+                                            height: '100%',
+                                            backgroundColor: style.fill,
+                                            clipPath: `polygon(${zone.polygon.map(pt => {
+                                                const pct = geoToMapPercent(pt.lat, pt.lng);
+                                                return `${pct.x}% ${pct.y}%`;
+                                            }).join(', ')})`,
+                                            border: `1.5px dashed ${style.stroke}`,
+                                            pointerEvents: 'auto'
+                                        }}
+                                        className="cursor-help"
+                                        onClick={(e) => { e.stopPropagation(); onSelectZone(zone); }}
+                                    />
+                                    <div 
+                                        style={{ left: `${center.x}%`, top: `${center.y}%`, transform: 'translate(-50%, -50%)', borderColor: style.stroke, color: style.stroke }}
+                                        className="absolute pointer-events-auto p-1 bg-oceanDeep/95 border border-dashed rounded-full shadow-lg text-[9px] cursor-pointer flex items-center justify-center"
+                                        onClick={(e) => { e.stopPropagation(); onSelectZone(zone); }}
+                                    >
+                                        <i data-lucide="shield" class="w-3 h-3"></i>
+                                    </div>
+                                </div>
+                            );
+                        })}
+
+                        {/* Beaches */}
+                        {showBeaches && beaches.map(beach => {
+                            const pos = geoToMapPercent(beach.latitude, beach.longitude);
+                            const isPropria = beach.status === 'PROPRIA';
+                            const color = isPropria ? '#10b981' : '#f43f5e';
+
+                            return (
+                                <div 
+                                    key={beach.id}
+                                    style={{ left: `${pos.x}%`, top: `${pos.y}%`, transform: 'translate(-50%, -100%)' }}
+                                    className="absolute z-20 pointer-events-auto cursor-pointer flex flex-col items-center"
+                                    onClick={(e) => { e.stopPropagation(); onSelectBeach(beach); }}
+                                >
+                                    <div className="p-1 rounded-full border shadow-lg flex items-center justify-center" style={{ backgroundColor: '#051425', borderColor: color, color }}>
+                                        <i data-lucide="waves" class="w-3 h-3"></i>
+                                    </div>
+                                    <div className="w-1 h-1 -mt-0.5 transform rotate-45 border-r border-b" style={{ backgroundColor: '#051425', borderColor: color }} />
+                                </div>
+                            );
+                        })}
+
+                        {/* Citizen Reports */}
+                        {showReports && reports.map(rep => {
+                            const pos = geoToMapPercent(rep.latitude, rep.longitude);
+                            const color = rep.status === 'RESOLVIDO' ? '#10b981' : '#f97316';
+
+                            return (
+                                <div 
+                                    key={rep.id}
+                                    style={{ left: `${pos.x}%`, top: `${pos.y}%`, transform: 'translate(-50%, -100%)' }}
+                                    className="absolute z-25 pointer-events-auto cursor-pointer flex flex-col items-center"
+                                    onClick={(e) => { e.stopPropagation(); onSelectReport(rep); }}
+                                >
+                                    <div className="p-1 rounded bg-black/80 border shadow-lg flex items-center justify-center" style={{ borderColor: color, color }}>
+                                        <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i>
+                                    </div>
+                                    <div className="w-1 h-1 -mt-0.5 transform rotate-45 border-r border-b" style={{ backgroundColor: 'black', borderColor: color }} />
+                                </div>
+                            );
+                        })}
+
+                        {/* GPS Active Marker */}
+                        <div 
+                            style={{ left: `${userPos.x}%`, top: `${userPos.y}%`, transform: 'translate(-50%, -50%)' }}
+                            className="absolute z-30 pointer-events-none"
+                        >
+                            <span className="absolute -left-3 -top-3 w-8 h-8 bg-accentAqua opacity-20 rounded-full animate-ping" />
+                            <div className="p-1 bg-accentAqua rounded-full text-oceanDark border border-white shadow-lg flex items-center justify-center">
+                                <i data-lucide="map-pin" class="w-3 h-3 fill-current"></i>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            );
+        }
+
+        // --- CITIZEN MOBILE INTERFACE ---
+        function MobileApp({
+            currentLocation,
+            onLocationChange,
+            beaches,
+            zones,
+            reports,
+            onAddReport,
+            onSelectBeach,
+            onSelectZone,
+            onSelectReport
+        }) {
+            const [activeTab, setActiveTab] = useState('map');
+            const [layerBeaches, setLayerBeaches] = useState(true);
+            const [layerZones, setLayerZones] = useState(true);
+            const [layerReports, setLayerReports] = useState(true);
+
+            // Report Form
+            const [title, setTitle] = useState('');
+            const [desc, setDesc] = useState('');
+            const [cat, setCat] = useState('LIXO');
+            const [presetIdx, setPresetIdx] = useState(null);
+            const [submitted, setSubmitted] = useState(false);
+
+            const selectPreset = (idx) => {
+                setPresetIdx(idx);
+                setTitle(POLLUTION_PRESETS[idx].name);
+                setDesc(POLLUTION_PRESETS[idx].description);
+                setCat(POLLUTION_PRESETS[idx].category);
+            };
+
+            const handleReportSubmit = (e) => {
+                e.preventDefault();
+                if (!title || !desc) return;
+
+                const newRep = {
+                    id: 'd_' + Date.now(),
+                    title,
+                    description: desc,
+                    category: cat,
+                    latitude: currentLocation.lat,
+                    longitude: currentLocation.lng,
+                    photoUrl: presetIdx !== null ? POLLUTION_PRESETS[presetIdx].url : 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=400&q=80',
+                    status: 'ANALISANDO',
+                    timestamp: new Date().toISOString(),
+                    aiAnalysis: {
+                        severity: cat === 'OLEO' || cat === 'ESGOTO' ? 'ALTA' : 'MEDIA',
+                        classification: `Ocorrência local de ${cat.toLowerCase()}`,
+                        mitigationSuggestion: 'Isolar a área imediatamente e avisar voluntários locais.',
+                        impactAnalysis: 'Risco químico local e possível contaminação da fauna silvestre.',
+                        suggestedAction: 'Notificar Vigilância e Defesa Civil'
+                    }
+                };
+
+                onAddReport(newRep);
+                setSubmitted(true);
+                setTitle('');
+                setDesc('');
+                setPresetIdx(null);
+            };
+
+            useEffect(() => {
+                if (window.lucide) window.lucide.createIcons();
+            }, [activeTab, submitted]);
+
+            return (
+                <div className="relative mx-auto w-full max-w-[360px] h-[720px] bg-[#0c141d] rounded-[44px] p-3 border-[6px] border-[#1e2a38] shadow-2xl flex flex-col overflow-hidden">
+                    {/* Speaker Notch */}
+                    <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-28 h-5 bg-[#1e2a38] rounded-b-xl z-50 flex items-center justify-center">
+                        <div className="w-8 h-2 bg-black rounded-full" />
+                    </div>
+
+                    <div className="w-full h-full bg-[#050a12] rounded-[34px] overflow-hidden flex flex-col relative pt-4">
+                        {/* Header */}
+                        <div className="bg-[#071324] border-b border-[#0f243c] px-4 py-2 flex items-center justify-between z-40">
+                            <div className="flex items-center gap-1.5">
+                                <span className="p-1 bg-accentGreen text-white rounded text-[10px] font-black leading-none">OG</span>
+                                <div className="flex flex-col">
+                                    <span className="text-[10px] font-black text-white">OCEANGUARD</span>
+                                    <span className="text-[6px] text-accentAqua font-mono tracking-wider">CIDADÃO</span>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-1 bg-[#091a2e] px-2 py-0.5 rounded-full border border-[#0d345c] text-[7px] font-mono text-oceanLight">
+                                <span className="w-1 h-1 bg-accentGreen rounded-full animate-pulse" />
+                                <span>GPS ADQ</span>
+                            </div>
+                        </div>
+
+                        {/* Tab Content */}
+                        <div className="flex-1 w-full relative overflow-hidden">
+                            {activeTab === 'map' && (
+                                <div className="w-full h-full relative flex flex-col">
+                                    {/* Layers controls */}
+                                    <div className="absolute top-2 left-2 z-30 flex flex-col gap-1 bg-[#081e36]/90 border border-[#0d345c] p-1.5 rounded-lg">
+                                        <label className="flex items-center gap-1 text-[8px] text-gray-200 cursor-pointer">
+                                            <input type="checkbox" checked={layerBeaches} onChange={(e) => setLayerBeaches(e.target.checked)} />
+                                            <span>Balneabilidade</span>
+                                        </label>
+                                        <label className="flex items-center gap-1 text-[8px] text-gray-200 cursor-pointer">
+                                            <input type="checkbox" checked={layerZones} onChange={(e) => setLayerZones(e.target.checked)} />
+                                            <span>Proteção</span>
+                                        </label>
+                                        <label className="flex items-center gap-1 text-[8px] text-gray-200 cursor-pointer">
+                                            <input type="checkbox" checked={layerReports} onChange={(e) => setLayerReports(e.target.checked)} />
+                                            <span>Denúncias</span>
+                                        </label>
+                                    </div>
+
+                                    <div className="flex-1 w-full">
+                                        <InteractiveMap 
+                                            currentLocation={currentLocation}
+                                            onLocationChange={onLocationChange}
+                                            beaches={beaches}
+                                            zones={zones}
+                                            reports={reports}
+                                            showBeaches={layerBeaches}
+                                            showZones={layerZones}
+                                            showReports={layerReports}
+                                            onSelectBeach={onSelectBeach}
+                                            onSelectZone={onSelectZone}
+                                            onSelectReport={onSelectReport}
+                                            onMapDoubleClick={(coords) => { onLocationChange(coords); setActiveTab('report'); }}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeTab === 'report' && (
+                                <div className="w-full h-full p-4 overflow-y-auto bg-[#050a12] flex flex-col gap-3">
+                                    <h3 className="text-xs font-black text-white flex items-center gap-1">
+                                        <i data-lucide="camera" class="w-4 h-4 text-accentAqua"></i>
+                                        Nova Denúncia Ambiental
+                                    </h3>
+
+                                    {submitted ? (
+                                        <div className="bg-emerald-950/40 border border-accentGreen/50 p-4 rounded-xl text-center flex flex-col items-center gap-2">
+                                            <i data-lucide="check-circle" class="w-10 h-10 text-accentGreen"></i>
+                                            <span className="text-xs font-bold text-white">Denúncia Registrada!</span>
+                                            <p className="text-[10px] text-gray-300">O Maestro recebeu o log. A triagem automática foi iniciada.</p>
+                                            <button onClick={() => setSubmitted(false)} className="px-3 py-1 bg-accentGreen text-oceanDark font-bold text-[10px] rounded mt-2">Fazer Outro Registro</button>
+                                        </div>
+                                    ) : (
+                                        <form onSubmit={handleReportSubmit} className="flex flex-col gap-2 pb-6">
+                                            <div className="bg-[#071324] p-2 rounded-lg border border-[#0d345c] flex items-center justify-between text-[8px]">
+                                                <span className="text-oceanLight">GPS ATIVO:</span>
+                                                <span className="font-mono font-bold text-white">{currentLocation.lat.toFixed(4)}°S , {currentLocation.lng.toFixed(4)}°W</span>
+                                            </div>
+
+                                            {/* Camera Presets */}
+                                            <div className="flex flex-col gap-1">
+                                                <span className="text-[9px] text-oceanLight font-mono">Foto Simulada:</span>
+                                                <div className="grid grid-cols-2 gap-1.5">
+                                                    {POLLUTION_PRESETS.map((preset, idx) => (
+                                                        <div 
+                                                            key={idx} onClick={() => selectPreset(idx)}
+                                                            className={`relative h-11 rounded border overflow-hidden cursor-pointer ${presetIdx === idx ? 'border-accentAqua ring-1 ring-accentAqua' : 'border-[#0d345c] opacity-60'}`}
+                                                        >
+                                                            <img src={preset.url} className="w-full h-full object-cover" />
+                                                            <span className="absolute inset-x-0 bottom-0 bg-black/60 text-[7px] text-white truncate text-center font-bold px-1">{preset.name}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            <div className="flex flex-col gap-0.5">
+                                                <label className="text-[8px] text-oceanLight font-mono">TÍTULO</label>
+                                                <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ex: Mancha de óleo" className="bg-[#071324] border border-[#0f243c] p-1.5 rounded text-[10px] text-white focus:outline-none" required />
+                                            </div>
+
+                                            <div className="flex flex-col gap-0.5">
+                                                <label className="text-[8px] text-oceanLight font-mono">CATEGORIA</label>
+                                                <select value={cat} onChange={(e) => setCat(e.target.value)} className="bg-[#071324] border border-[#0f243c] p-1.5 rounded text-[10px] text-white focus:outline-none">
+                                                    <option value="LIXO">Lixo Plástico / Resíduos</option>
+                                                    <option value="OLEO">Derramamento de Óleo</option>
+                                                    <option value="ESGOTO">Esgoto Clandestino</option>
+                                                    <option value="PESCA_ILEGAL">Pesca Ilegal / Arrastão</option>
+                                                </select>
+                                            </div>
+
+                                            <div className="flex flex-col gap-0.5">
+                                                <label className="text-[8px] text-oceanLight font-mono">DESCRIÇÃO DOS FATOS</label>
+                                                <textarea value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Descreva o que observou..." rows="2" className="bg-[#071324] border border-[#0f243c] p-1.5 rounded text-[10px] text-white focus:outline-none resize-none" required></textarea>
+                                            </div>
+
+                                            <button type="submit" className="w-full py-2 bg-accentAqua hover:bg-cyan-500 text-oceanDark font-bold text-xs rounded-xl mt-2 flex items-center justify-center gap-1">
+                                                <i data-lucide="upload" class="w-3.5 h-3.5"></i>
+                                                Enviar Denúncia
+                                            </button>
+                                        </form>
+                                    )}
+                                </div>
+                            )}
+
+                            {activeTab === 'alerts' && (
+                                <div className="w-full h-full p-4 overflow-y-auto bg-[#050a12] flex flex-col gap-2">
+                                    <h3 className="text-xs font-black text-white flex items-center gap-1 mb-2">
+                                        <i data-lucide="shield-alert" class="w-4 h-4 text-accentCoral"></i>
+                                        Alertas de Preservação (ODS 14)
+                                    </h3>
+                                    <div className="bg-red-950/20 border border-accentCoral/30 p-2.5 rounded-lg flex flex-col gap-1 text-[10px]">
+                                        <span className="font-mono font-bold text-accentCoral flex items-center gap-1">
+                                            <i data-lucide="alert-circle" class="w-3 h-3"></i>
+                                            Área de Balneabilidade Contaminada
+                                        </span>
+                                        <p className="text-gray-300">A praia de Canasvieiras foi classificada como IMPRÓPRIA devido a esgotos. Evite banhos na área.</p>
+                                    </div>
+                                    <div className="bg-amber-950/20 border border-amber-500/30 p-2.5 rounded-lg flex flex-col gap-1 text-[10px]">
+                                        <span className="font-mono font-bold text-amber-400 flex items-center gap-1">
+                                            <i data-lucide="compass" class="w-3 h-3"></i>
+                                            Aviso de Berçário de Camarões
+                                        </span>
+                                        <p className="text-gray-300">Você está próximo à área de proteção ambiental da Lagoa da Conceição. Pesca restrita ativa.</p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Navigation bar */}
+                        <div className="bg-[#071324] border-t border-[#0f243c] py-2 px-4 flex items-center justify-around z-40 rounded-b-[34px]">
+                            <button onClick={() => setActiveTab('map')} className={`flex flex-col items-center gap-0.5 ${activeTab === 'map' ? 'text-accentAqua' : 'text-gray-500'}`}>
+                                <i data-lucide="compass" class="w-4 h-4"></i>
+                                <span className="text-[7px] font-bold">Radar</span>
+                            </button>
+                            <button onClick={() => setActiveTab('report')} className={`flex flex-col items-center gap-0.5 ${activeTab === 'report' ? 'text-accentAqua' : 'text-gray-500'}`}>
+                                <i data-lucide="camera" class="w-4 h-4"></i>
+                                <span className="text-[7px] font-bold">Reportar</span>
+                            </button>
+                            <button onClick={() => setActiveTab('alerts')} className={`flex flex-col items-center gap-0.5 ${activeTab === 'alerts' ? 'text-accentAqua' : 'text-gray-500'}`}>
+                                <i data-lucide="shield-alert" class="w-4 h-4"></i>
+                                <span className="text-[7px] font-bold">Alertas</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // --- GESTAO WEB ADMIN PANEL COMPONENT ---
+        function AdminPanel({
+            beaches,
+            zones,
+            reports,
+            onUpdateStatus,
+            onDeleteReport,
+            onToggleBeachStatus
+        }) {
+            const [selectedRepId, setSelectedRepId] = useState(null);
+            const selectedRep = reports.find(r => r.id === selectedRepId) || null;
+
+            useEffect(() => {
+                if (window.lucide) window.lucide.createIcons();
+            }, [reports, selectedRepId]);
+
+            const improperCount = beaches.filter(b => b.status === 'IMPROPRIA').length;
+
+            return (
+                <div className="w-full h-full bg-[#030d1a] border border-[#0d345c] rounded-2xl flex flex-col overflow-hidden font-sans shadow-2xl">
+                    <div className="bg-[#05152a] px-6 py-4 border-b border-[#0f345e] flex items-center justify-between">
+                        <div>
+                            <h2 className="text-sm font-black text-white flex items-center gap-2">
+                                <i data-lucide="database" class="w-4.5 h-4.5 text-accentAqua"></i>
+                                CONSOLE DE MONITORAMENTO GOVERNAMENTAL — WEB PORTAL (ODS 14)
+                            </h2>
+                            <p className="text-[10px] text-gray-400 mt-0.5">Gestão de relatórios ambientais e balneabilidade de praias</p>
+                        </div>
+                    </div>
+
+                    <div className="p-6 overflow-y-auto flex flex-col gap-6 flex-1 bg-[#030a13]">
+                        {/* Summary cards */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div className="bg-[#07172c] border border-[#0d345c]/70 p-4 rounded-xl flex items-center gap-3">
+                                <div className="p-2.5 bg-rose-950/40 border border-rose-500/30 text-rose-400 rounded-lg">
+                                    <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-[9px] font-mono text-oceanLight uppercase">Denúncias Ativas</span>
+                                    <span className="text-xl font-black text-white mt-0.5">{reports.length}</span>
+                                </div>
+                            </div>
+
+                            <div className="bg-[#07172c] border border-[#0d345c]/70 p-4 rounded-xl flex items-center gap-3">
+                                <div className="p-2.5 bg-amber-950/40 border border-amber-500/30 text-amber-400 rounded-lg">
+                                    <i data-lucide="waves" class="w-5 h-5"></i>
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-[9px] font-mono text-oceanLight uppercase">Praias Impróprias</span>
+                                    <span className="text-xl font-black text-white mt-0.5">{improperCount} / {beaches.length}</span>
+                                </div>
+                            </div>
+
+                            <div className="bg-[#07172c] border border-[#0d345c]/70 p-4 rounded-xl flex items-center gap-3">
+                                <div className="p-2.5 bg-emerald-950/40 border border-accentGreen/30 text-accentGreen rounded-lg">
+                                    <i data-lucide="shield" class="w-5 h-5"></i>
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-[9px] font-mono text-oceanLight uppercase">Áreas Protegidas</span>
+                                    <span className="text-xl font-black text-white mt-0.5">{zones.length} Zonas</span>
+                                </div>
+                            </div>
+
+                            <div className="bg-[#07172c] border border-[#0d345c]/70 p-4 rounded-xl flex items-center gap-3">
+                                <div className="p-2.5 bg-[#052b21] border border-accentAqua/30 text-accentAqua rounded-lg">
+                                    <i data-lucide="activity" class="w-5 h-5"></i>
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-[9px] font-mono text-oceanLight uppercase">Índice Marinho</span>
+                                    <span className="text-xl font-black text-accentGreen mt-0.5">84%</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* List vs Detail split */}
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <div className="lg:col-span-2 bg-[#07172c] border border-[#0d345c]/70 rounded-xl overflow-hidden flex flex-col">
+                                <div className="px-4 py-2.5 bg-[#091b33] border-b border-[#0d345c]/50">
+                                    <span className="text-xs font-bold text-white uppercase tracking-wider">Histórico de Ocorrências Locais (NoSQL logs)</span>
+                                </div>
+                                <div className="overflow-x-auto min-h-[300px]">
+                                    <table className="w-full border-collapse text-xs text-left">
+                                        <thead>
+                                            <tr className="border-b border-[#0d345c]/30 text-gray-400 text-[10px] font-mono uppercase bg-[#051325]">
+                                                <th className="p-3 pl-4">Incidente</th>
+                                                <th className="p-3">Categoria</th>
+                                                <th className="p-3">Risco</th>
+                                                <th className="p-3">Status</th>
+                                                <th className="p-3 text-right">Ação</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {reports.map(rep => (
+                                                <tr 
+                                                    key={rep.id} onClick={() => setSelectedRepId(rep.id)}
+                                                    className={`border-b border-[#0d345c]/20 hover:bg-[#0a2342] transition-colors cursor-pointer ${selectedRepId === rep.id ? 'bg-[#0f2a4c]' : ''}`}
+                                                >
+                                                    <td className="p-3 pl-4">
+                                                        <div className="flex flex-col">
+                                                            <span className="font-bold text-white">{rep.title}</span>
+                                                            <span className="text-[9px] text-gray-500 font-mono">LAT: {rep.latitude.toFixed(3)}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="p-3 text-gray-300 font-semibold">{rep.category}</td>
+                                                    <td className="p-3">
+                                                        <span className={`px-2 py-0.5 rounded text-[8px] font-black ${rep.aiAnalysis?.severity === 'ALTA' ? 'bg-red-950 text-red-400' : 'bg-amber-950 text-amber-400'}`}>
+                                                            {rep.aiAnalysis?.severity}
+                                                        </span>
+                                                    </td>
+                                                    <td className="p-3 font-mono font-bold text-oceanLight">{rep.status}</td>
+                                                    <td className="p-3 text-right">
+                                                        <button className="p-1 bg-[#091f3a] text-accentAqua border border-[#0d345c] rounded"><i data-lucide="eye" class="w-3.5 h-3.5"></i></button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            {/* Details panel */}
+                            <div className="bg-[#07172c] border border-[#0d345c]/70 rounded-xl p-4 flex flex-col gap-4">
+                                <span className="text-xs font-bold text-white uppercase border-b border-[#0d345c] pb-2">Auditoria de Triagem IA (Babel Simulated)</span>
+                                {selectedRep ? (
+                                    <div className="flex flex-col gap-3">
+                                        <div className="h-24 rounded overflow-hidden border border-[#0d345c] bg-black">
+                                            <img src={selectedRep.photoUrl} className="w-full h-full object-cover" />
+                                        </div>
+                                        <div>
+                                            <span className="text-[8px] text-accentAqua font-mono font-bold uppercase">{selectedRep.category}</span>
+                                            <h4 className="text-sm font-black text-white">{selectedRep.title}</h4>
+                                            <p className="text-[10px] text-gray-300 leading-relaxed bg-black/30 p-2 rounded border border-[#0d345c]/30 mt-1">"{selectedRep.description}"</p>
+                                        </div>
+
+                                        {selectedRep.aiAnalysis && (
+                                            <div className="bg-[#051425] p-3 rounded-lg border border-[#1b3d63] flex flex-col gap-1.5 text-[10px]">
+                                                <span className="font-extrabold text-[#4ed2d2] uppercase flex items-center gap-1">
+                                                    <i data-lucide="activity" class="w-3.5 h-3.5 text-[#4ed2d2]"></i>
+                                                    DIAGNÓSTICO GEMINI 3.5
+                                                </span>
+                                                <p><strong>Classe:</strong> {selectedRep.aiAnalysis.classification}</p>
+                                                <p><strong>Impacto:</strong> {selectedRep.aiAnalysis.impactAnalysis}</p>
+                                                <p className="text-[#10b981]"><strong>Conselho:</strong> "{selectedRep.aiAnalysis.mitigationSuggestion}"</p>
+                                            </div>
+                                        )}
+
+                                        <div className="flex flex-col gap-1.5 mt-2 pt-2 border-t border-[#0d345c]/50">
+                                            <span className="text-[8px] font-mono text-gray-400">DESPACHO GOVERNAMENTAL</span>
+                                            <div className="grid grid-cols-2 gap-1.5">
+                                                <button onClick={() => onUpdateStatus(selectedRep.id, 'CONFIRMADO')} className="py-1 text-[9px] font-bold bg-amber-600 hover:bg-amber-500 text-white rounded">CONFIRMAR</button>
+                                                <button onClick={() => onUpdateStatus(selectedRep.id, 'RESOLVIDO')} className="py-1 text-[9px] font-bold bg-accentGreen hover:bg-emerald-500 text-white rounded">RESOLVER</button>
+                                            </div>
+                                            <button onClick={() => { onDeleteReport(selectedRep.id); setSelectedRepId(null); }} className="py-1.5 bg-red-950 hover:bg-red-900 text-red-200 border border-red-900/40 text-[9px] rounded font-bold">REMOVER REGISTRO</button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-12 text-gray-500 text-[10px] italic">Selecione uma ocorrência para auditoria.</div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Playground beach controls */}
+                        <div className="bg-[#051428] border border-accentGreen/30 rounded-xl p-5 flex flex-col gap-3">
+                            <h3 className="text-xs font-black text-accentGreen uppercase tracking-wider font-mono flex items-center gap-1.5">
+                                <i data-lucide="sliders" class="w-4 h-4"></i>
+                                CONTROLES DE BALNEABILIDADE — SIMULAÇÃO DE LAUDO LABORATORIAL
+                            </h3>
+                            <p className="text-[10px] text-gray-300">Simule novos laudos estatais para as praias. Os aplicativos cidadãos e alertas de rádio responderão instantaneamente!</p>
+                            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mt-1">
+                                {beaches.map(beach => (
+                                    <div 
+                                        key={beach.id} onClick={() => onToggleBeachStatus(beach.id)}
+                                        className={`p-2.5 rounded border text-center cursor-pointer active:scale-95 transition-all ${beach.status === 'PROPRIA' ? 'bg-emerald-950/50 border-accentGreen/50 text-accentGreen' : 'bg-red-950/50 border-accentCoral/50 text-accentCoral'}`}
+                                    >
+                                        <i data-lucide="waves" class="w-4 h-4 mx-auto mb-1"></i>
+                                        <span className="text-[10px] font-bold text-white block truncate">{beach.name}</span>
+                                        <span className="text-[8px] font-black uppercase bg-black/40 px-1 py-0.5 rounded mt-1.5 inline-block">{beach.status}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // --- ROOT ENTRY COMPONENT ---
+        function App() {
+            const [currentLocation, setCurrentLocation] = useState({ lat: -27.5954, lng: -48.5480 });
+            const [beaches, setBeaches] = useState(INITIAL_BEACHES);
+            const [zones, setZones] = useState(INITIAL_ZONES);
+            const [reports, setReports] = useState(INITIAL_REPORTS);
+            
+            // Inspectors
+            const [inspBeach, setInspBeach] = useState(null);
+            const [inspZone, setInspZone] = useState(null);
+            const [inspReport, setInspReport] = useState(null);
+
+            const handleLocationChange = (coords) => {
+                setCurrentLocation(coords);
+            };
+
+            const handleAddReport = (newRep) => {
+                setReports(prev => [newRep, ...prev]);
+            };
+
+            const handleUpdateStatus = (id, status) => {
+                setReports(prev => prev.map(r => r.id === id ? { ...r, status } : r));
+                if (inspReport && inspReport.id === id) {
+                    setInspReport(prev => ({ ...prev, status }));
+                }
+            };
+
+            const handleDeleteReport = (id) => {
+                setReports(prev => prev.filter(r => r.id !== id));
+                if (inspReport && inspReport.id === id) setInspReport(null);
+            };
+
+            const handleToggleBeachStatus = (id) => {
+                setBeaches(prev => prev.map(b => b.id === id ? { ...b, status: b.status === 'PROPRIA' ? 'IMPROPRIA' : 'PROPRIA' } : b));
+            };
+
+            useEffect(() => {
+                if (window.lucide) window.lucide.createIcons();
+            }, [inspBeach, inspZone, inspReport]);
+
+            return (
+                <div className="min-h-screen bg-[#020912] bg-[radial-gradient(ellipse_at_top,_#071a30_0%,_#020912_100%)] text-gray-200 flex flex-col justify-between">
+                    
+                    {/* Header */}
+                    <header className="bg-[#04101e]/90 border-b border-[#0d345c]/50 px-6 py-4 flex flex-col md:flex-row items-center justify-between z-50">
+                        <div className="flex items-center gap-2">
+                            <div className="p-2 bg-accentGreen text-white rounded-xl flex items-center justify-center">
+                                <i data-lucide="waves" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h1 className="text-base font-black tracking-tighter text-white flex items-center gap-1.5">
+                                    OCEANGUARD STANDALONE <span className="text-[9px] bg-[#0d345c] text-accentAqua px-2 py-0.5 rounded-full border border-accentAqua/30 uppercase">Local HTML</span>
+                                </h1>
+                                <p className="text-xs text-gray-400">Plataforma Portátil de Preservação Marinha (ODS 14) — Rodando offline no navegador!</p>
+                            </div>
+                        </div>
+
+                        {/* Location Teleporters */}
+                        <div className="flex items-center gap-1.5 bg-[#05152a] p-1.5 rounded-xl border border-[#0d345c] mt-4 md:mt-0">
+                            <span className="text-[10px] text-oceanLight font-mono">SIMULAR GPS COSTEIRO:</span>
+                            <button onClick={() => handleLocationChange({ lat: -27.5954, lng: -48.5480 })} className="px-2 py-1 bg-[#091e36] text-accentAqua hover:bg-[#12335c] rounded text-[9px] font-mono font-bold">FLORIANÓPOLIS</button>
+                            <button onClick={() => handleLocationChange({ lat: -22.9519, lng: -43.2105 })} className="px-2 py-1 bg-[#091e36] text-accentAqua hover:bg-[#12335c] rounded text-[9px] font-mono font-bold">RIO DE JANEIRO</button>
+                            <button onClick={() => handleLocationChange({ lat: -12.9714, lng: -38.5014 })} className="px-2 py-1 bg-[#091e36] text-accentAqua hover:bg-[#12335c] rounded text-[9px] font-mono font-bold">SALVADOR</button>
+                        </div>
+                    </header>
+
+                    {/* Main Content Layout */}
+                    <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                        {/* Mobile Phone Container (Left) */}
+                        <div className="lg:col-span-4 flex justify-center flex-col items-center gap-4">
+                            <MobileApp 
+                                currentLocation={currentLocation}
+                                onLocationChange={handleLocationChange}
+                                beaches={beaches}
+                                zones={zones}
+                                reports={reports}
+                                onAddReport={handleAddReport}
+                                onSelectBeach={(b) => { setInspBeach(b); setInspZone(null); setInspReport(null); }}
+                                onSelectZone={(z) => { setInspZone(z); setInspBeach(null); setInspReport(null); }}
+                                onSelectReport={(r) => { setInspReport(r); setInspBeach(null); setInspZone(null); }}
+                            />
+
+                            {/* Floating Map Item Inspector */}
+                            {(inspBeach || inspZone || inspReport) && (
+                                <div className="w-full max-w-[360px] bg-oceanDeep border border-[#0d345c] rounded-xl p-4 flex flex-col gap-2 relative">
+                                    <button onClick={() => { setInspBeach(null); setInspZone(null); setInspReport(null); }} className="absolute top-3 right-3 text-[10px] text-gray-500 hover:text-white font-mono">Fechar</button>
+                                    
+                                    {inspBeach && (
+                                        <div>
+                                            <h4 className="text-xs font-black text-white flex items-center gap-1">
+                                                <i data-lucide="waves" class="w-4 h-4 text-accentGreen"></i>
+                                                {inspBeach.name}
+                                            </h4>
+                                            <p className="text-[10px] text-gray-400">{inspBeach.city} — Monitoramento</p>
+                                            <div className="grid grid-cols-2 gap-2 mt-2">
+                                                <div className="bg-black/40 p-2 rounded border border-[#0d345c] text-[9px]">
+                                                    <span className="text-gray-400 block">STATUS</span>
+                                                    <strong className={inspBeach.status === 'PROPRIA' ? 'text-accentGreen' : 'text-accentCoral'}>{inspBeach.status}</strong>
+                                                </div>
+                                                <div className="bg-black/40 p-2 rounded border border-[#0d345c] text-[9px]">
+                                                    <span className="text-gray-400 block">E. COLI</span>
+                                                    <strong className="text-white">{inspBeach.paramEColi} NMP/100ml</strong>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {inspZone && (
+                                        <div>
+                                            <h4 className="text-xs font-black text-white flex items-center gap-1">
+                                                <i data-lucide="shield" class="w-4 h-4 text-orange-400"></i>
+                                                {inspZone.name}
+                                            </h4>
+                                            <p className="text-[10px] text-gray-300 mt-1">{inspZone.description}</p>
+                                            <span className="inline-block mt-2 px-2 py-0.5 bg-orange-950/40 border border-orange-500/40 text-[8px] font-mono text-orange-400 rounded">ÁREA DE PROTEÇÃO INTEGRAL</span>
+                                        </div>
+                                    )}
+
+                                    {inspReport && (
+                                        <div>
+                                            <h4 className="text-xs font-black text-white flex items-center gap-1">
+                                                <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-500"></i>
+                                                {inspReport.title}
+                                            </h4>
+                                            <p className="text-[10px] text-gray-300 mt-1">{inspReport.description}</p>
+                                            
+                                            {inspReport.aiAnalysis && (
+                                                <div className="bg-black/40 border border-[#0d345c] p-2 rounded text-[9px] mt-2 flex flex-col gap-1 text-gray-300">
+                                                    <span className="font-extrabold text-[#4ed2d2] uppercase font-mono">Diagnóstico Simulado Gemini:</span>
+                                                    <p><strong>Causa:</strong> {inspReport.aiAnalysis.classification}</p>
+                                                    <p className="text-accentCoral"><strong>Mitigação:</strong> {inspReport.aiAnalysis.mitigationSuggestion}</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Web platform layout on the right */}
+                        <div className="lg:col-span-8">
+                            <AdminPanel 
+                                beaches={beaches}
+                                zones={zones}
+                                reports={reports}
+                                onUpdateStatus={handleUpdateStatus}
+                                onDeleteReport={handleDeleteReport}
+                                onToggleBeachStatus={handleToggleBeachStatus}
+                            />
+                        </div>
+                    </main>
+
+                    {/* Footer */}
+                    <footer className="bg-[#01060e] border-t border-[#0d345c]/30 px-6 py-4 text-center text-[10px] text-gray-500 font-mono">
+                        OCEANGUARD INTELLIGENCE © 2026 • PORTABLE OFFLINE PLATFORM (ODS 14)
+                    </footer>
+
+                </div>
+            );
+        }
+
+        // Render application
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+
+        // Create lucide icons helper on mounts
+        setTimeout(() => {
+            if (window.lucide) window.lucide.createIcons();
+        }, 1000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OceanGuard — Recife</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f3f4f6;
+            color: #1f2937;
+            padding: 16px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .card {
+            background: white;
+            border: 1px solid #93c5fd;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        .btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 12px;
+            display: inline-block;
+        }
+        .btn:hover {
+            transform: scale(1.02);
+        }
+        .btn-primary {
+            background: #0d9488;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #0f766e;
+        }
+        .btn-success {
+            background: #059669;
+            color: white;
+        }
+        .btn-success:hover {
+            background: #047857;
+        }
+        .btn-warning {
+            background: #d97706;
+            color: white;
+        }
+        .btn-warning:hover {
+            background: #b45309;
+        }
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+        .btn-outline {
+            background: #e5e7eb;
+            color: #374151;
+        }
+        .btn-outline:hover {
+            background: #d1d5db;
+        }
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 24px;
+        }
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+        .grid-5 {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+        }
+        .badge-success {
+            background: #d1fae5;
+            color: #059669;
+            padding: 2px 12px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 700;
+            display: inline-block;
+        }
+        .badge-danger {
+            background: #fecaca;
+            color: #dc2626;
+            padding: 2px 12px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 700;
+            display: inline-block;
+        }
+        .badge-warning {
+            background: #fde68a;
+            color: #d97706;
+            padding: 2px 12px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 700;
+            display: inline-block;
+        }
+        .badge-alta {
+            background: #7f1d1d;
+            color: #fca5a5;
+            padding: 2px 12px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 700;
+            display: inline-block;
+        }
+        .badge-media {
+            background: #78350f;
+            color: #fcd34d;
+            padding: 2px 12px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 700;
+            display: inline-block;
+        }
+        .report-item {
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .report-item:hover {
+            background: #f3f4f6;
+        }
+        .report-item.selected {
+            background: #bfdbfe;
+        }
+        .map-container {
+            background: #e5e7eb;
+            border: 2px dashed #93c5fd;
+            border-radius: 12px;
+            padding: 30px 20px;
+            text-align: center;
+            min-height: 280px;
+        }
+        .phone-frame {
+            background: #f3f4f6;
+            border-radius: 40px;
+            padding: 12px;
+            border: 6px solid #d1d5db;
+            max-width: 380px;
+            margin: 0 auto;
+        }
+        .phone-content {
+            background: white;
+            border-radius: 28px;
+            padding: 16px;
+            min-height: 520px;
+        }
+        .tab-btn {
+            padding: 10px 16px;
+            border-radius: 8px;
+            border: 1px solid #93c5fd;
+            background: white;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.2s;
+            flex: 1;
+            text-align: center;
+        }
+        .tab-btn.active {
+            background: #0d9488;
+            color: white;
+            border-color: #0d9488;
+        }
+        .tab-btn:hover:not(.active) {
+            background: #f3f4f6;
+        }
+        .beach-card {
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .beach-card:hover {
+            transform: scale(1.02);
+        }
+        .beach-card.propria {
+            background: #d1fae5;
+            border-color: #059669;
+        }
+        .beach-card.impropria {
+            background: #fecaca;
+            border-color: #dc2626;
+        }
+        .stat-card {
+            background: white;
+            border: 1px solid #93c5fd;
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 28px;
+            font-weight: 900;
+            color: #111827;
+        }
+        .stat-label {
+            font-size: 11px;
+            color: #6b7280;
+            font-weight: 500;
+        }
+        .preset-img {
+            height: 56px;
+            border-radius: 6px;
+            object-fit: cover;
+            width: 100%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .preset-img.selected {
+            border-color: #0d9488;
+            box-shadow: 0 0 0 2px #0d9488;
+        }
+        .preset-img:hover {
+            opacity: 0.8;
+        }
+        .flex-between {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .flex {
+            display: flex;
+        }
+        .flex-wrap {
+            flex-wrap: wrap;
+        }
+        .gap-2 {
+            gap: 8px;
+        }
+        .gap-4 {
+            gap: 16px;
+        }
+        .mt-2 {
+            margin-top: 8px;
+        }
+        .mt-4 {
+            margin-top: 16px;
+        }
+        .mb-2 {
+            margin-bottom: 8px;
+        }
+        .mb-4 {
+            margin-bottom: 16px;
+        }
+        .text-center {
+            text-align: center;
+        }
+        .text-sm {
+            font-size: 13px;
+        }
+        .text-xs {
+            font-size: 11px;
+        }
+        .font-bold {
+            font-weight: 700;
+        }
+        .font-mono {
+            font-family: monospace;
+        }
+        .text-gray {
+            color: #6b7280;
+        }
+        .text-green {
+            color: #059669;
+        }
+        .text-red {
+            color: #dc2626;
+        }
+        .text-blue {
+            color: #0d9488;
+        }
+        .hidden {
+            display: none;
+        }
+        .w-full {
+            width: 100%;
+        }
+        .overflow-auto {
+            overflow: auto;
+        }
+        .max-h-64 {
+            max-height: 260px;
+        }
+        .border-t {
+            border-top: 1px solid #e5e7eb;
+        }
+        .pt-4 {
+            padding-top: 16px;
+        }
+        .mt-3 {
+            margin-top: 12px;
+        }
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            font-size: 13px;
+            transition: border 0.2s;
+        }
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #0d9488;
+            box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+        }
+        label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #6b7280;
+            display: block;
+            margin-bottom: 4px;
+        }
+        .gap-6 {
+            gap: 6px;
+        }
+        .items-center {
+            align-items: center;
+        }
+        @media (max-width: 1024px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+            .grid-4 {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .grid-5 {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        @media (max-width: 640px) {
+            .grid-4 {
+                grid-template-columns: 1fr 1fr;
+            }
+            .grid-5 {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .phone-frame {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ============================================================ -->
+    <!-- HTML ESTRUTURAL -->
+    <!-- ============================================================ -->
+
+    <div class="container" id="app">
+        <!-- HEADER -->
+        <header style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; margin-bottom:24px; padding-bottom:16px; border-bottom:2px solid #93c5fd;">
+            <div>
+                <h1 style="font-size:24px; font-weight:900; color:#111827;">
+                    🌊 OceanGuard — Recife
+                    <span style="font-size:11px; background:#93c5fd; padding:2px 12px; border-radius:20px; margin-left:12px; color:#0d9488; font-weight:700;">ODS 14</span>
+                </h1>
+                <p style="font-size:13px; color:#6b7280;">Plataforma de Preservação Marinha — Rodando offline no navegador!</p>
+            </div>
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                <button onclick="setLocation(-8.0600, -34.9200)" class="btn btn-primary">📍 Recife</button>
+                <button onclick="setLocation(-8.1300, -34.9030)" class="btn btn-primary">🏖️ Boa Viagem</button>
+                <button onclick="setLocation(-8.2800, -34.9300)" class="btn btn-primary">🏖️ Paiva</button>
+            </div>
+        </header>
+
+        <!-- MAIN CONTENT -->
+        <div class="grid-2">
+            <!-- LEFT: MOBILE APP -->
+            <div>
+                <div class="phone-frame">
+                    <div class="phone-content">
+                        <!-- Tabs -->
+                        <div style="display:flex; gap:8px; margin-bottom:16px;">
+                            <button class="tab-btn active" id="tabMap" onclick="switchTab('map')">📍 Mapa</button>
+                            <button class="tab-btn" id="tabReport" onclick="switchTab('report')">📷 Reportar</button>
+                            <button class="tab-btn" id="tabAlerts" onclick="switchTab('alerts')">🔔 Alertas</button>
+                        </div>
+
+                        <!-- Tab Content -->
+                        <div id="tabContent">
+                            <!-- Conteúdo renderizado via JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Details Panel -->
+                <div class="card" id="detailsPanel" style="margin-top:12px; display:none;">
+                    <div class="flex-between">
+                        <strong>📌 Detalhes</strong>
+                        <button onclick="clearDetails()" style="background:none; border:none; color:#6b7280; cursor:pointer; font-size:12px;">✕ Fechar</button>
+                    </div>
+                    <div id="detailsContent"></div>
+                </div>
+            </div>
+
+            <!-- RIGHT: ADMIN PANEL -->
+            <div>
+                <div class="card">
+                    <h2 style="font-size:18px; font-weight:bold; margin-bottom:16px;">📋 Console de Monitoramento Governamental</h2>
+
+                    <!-- Stats -->
+                    <div class="grid-4" style="margin-bottom:16px;">
+                        <div class="stat-card">
+                            <div class="stat-number" id="statReports">2</div>
+                            <div class="stat-label">Denúncias Ativas</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="statImproper" style="color:#dc2626;">2/5</div>
+                            <div class="stat-label">Praias Impróprias</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">3</div>
+                            <div class="stat-label">Áreas Protegidas</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" style="color:#059669;">84%</div>
+                            <div class="stat-label">Índice Marinho</div>
+                        </div>
+                    </div>
+
+                    <!-- Reports + Detail -->
+                    <div style="display:grid; grid-template-columns:2fr 1fr; gap:16px;">
+                        <div>
+                            <h3 style="font-weight:bold; font-size:14px; margin-bottom:8px;">📋 Relatórios</h3>
+                            <div class="overflow-auto max-h-64" id="reportList"></div>
+                        </div>
+                        <div>
+                            <h3 style="font-weight:bold; font-size:14px; margin-bottom:8px;">🔍 Auditoria</h3>
+                            <div id="auditPanel">
+                                <p style="font-size:12px; color:#6b7280; text-align:center; padding:20px 0;">Selecione um relatório para auditoria.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Beach Controls -->
+                    <div class="border-t pt-4 mt-4">
+                        <h3 style="font-weight:bold; font-size:14px; color:#059669; margin-bottom:8px;">🏖️ Controle de Balneabilidade</h3>
+                        <div class="grid-5" id="beachControls"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FOOTER -->
+        <footer style="margin-top:24px; padding-top:16px; border-top:1px solid #e5e7eb; text-align:center; font-size:11px; color:#6b7280;">
+            OCEANGUARD INTELLIGENCE © 2026 • PORTABLE OFFLINE PLATFORM (ODS 14) — Recife Metropolitan Area
+        </footer>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- JAVASCRIPT - LÓGICA COMPLETA -->
+    <!-- ============================================================ -->
+
+    <script>
+        // ============================================================
+        // DADOS
+        // ============================================================
+
+        let beaches = [
+            { id: 'b1', name: 'Praia de Boa Viagem', city: 'Recife', lat: -8.1300, lng: -34.9030, status: 'PROPRIA',
+                ecoli: 120 },
+            { id: 'b2', name: 'Praia do Pina', city: 'Recife', lat: -8.0950, lng: -34.8820, status: 'IMPROPRIA',
+                ecoli: 1800 },
+            { id: 'b3', name: 'Praia de Candeias', city: 'Jaboatão', lat: -8.1100, lng: -34.8600, status: 'PROPRIA',
+                ecoli: 80 },
+            { id: 'b4', name: 'Praia de Piedade', city: 'Jaboatão', lat: -8.1200, lng: -34.8900, status: 'IMPROPRIA',
+                ecoli: 2400 },
+            { id: 'b5', name: 'Praia do Paiva', city: 'Cabo', lat: -8.2800, lng: -34.9300, status: 'PROPRIA', ecoli: 45 }
+        ];
+
+        const zones = [
+            { id: 'z1', name: 'Estuário do Capibaribe', type: 'PROTECAO',
+            desc: 'Proteção de manguezais e berçário de peixes.' },
+            { id: 'z2', name: 'Reserva de Tamandaré', type: 'PROTECAO',
+            desc: 'Recifes de corais, tartarugas marinhas e biodiversidade.' },
+            { id: 'z3', name: 'Mangue de Suape', type: 'BERCARIO',
+            desc: 'Reprodução de camarões, caranguejos e espécies estuarinas.' }
+        ];
+
+        let reports = [{
+            id: 'r1',
+            title: 'Mancha escura no estuário do Capibaribe',
+            category: 'ESGOTO',
+            lat: -8.0650,
+            lng: -34.9200,
+            desc: 'Possível descarte clandestino de esgoto. Odor forte e mortandade de peixes.',
+            status: 'CONFIRMADO',
+            severity: 'ALTA',
+            photo: 'https://images.unsplash.com/photo-1611273426858-450d8e3c9fce?auto=format&fit=crop&w=400&q=80'
+        }, {
+            id: 'r2',
+            title: 'Lixo flutuante na Praia de Boa Viagem',
+            category: 'LIXO',
+            lat: -8.1280,
+            lng: -34.9010,
+            desc: 'Grande quantidade de garrafas, sacolas e isopor na faixa de areia.',
+            status: 'ANALISANDO',
+            severity: 'MEDIA',
+            photo: 'https://images.unsplash.com/photo-1618477388954-7852f32655ec?auto=format&fit=crop&w=400&q=80'
+        }];
+
+        const presets = [{
+            name: 'Derramamento de Óleo',
+            category: 'OLEO',
+            url: 'https://images.unsplash.com/photo-1535139262971-c3f8457091c8?auto=format&fit=crop&w=600&q=80',
+            desc: 'Mancha escura oleosa cobrindo a superfície da água.'
+        }, {
+            name: 'Lixo Plástico',
+            category: 'LIXO',
+            url: 'https://images.unsplash.com/photo-1618477388954-7852f32655ec?auto=format&fit=crop&w=600&q=80',
+            desc: 'Garrafas pet, sacolas e isopor acumulados.'
+        }, {
+            name: 'Esgoto Clandestino',
+            category: 'ESGOTO',
+            url: 'https://images.unsplash.com/photo-1611273426858-450d8e3c9fce?auto=format&fit=crop&w=600&q=80',
+            desc: 'Esgoto com espuma e odor forte de amônia.'
+        }, {
+            name: 'Pesca Ilegal',
+            category: 'PESCA_ILEGAL',
+            url: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=600&q=80',
+            desc: 'Embarcação operando pesca de arrasto em área protegida.'
+        }];
+
+        // ============================================================
+        // ESTADO
+        // ============================================================
+
+        let currentLocation = { lat: -8.0600, lng: -34.9200 };
+        let currentTab = 'map';
+        let selectedReportId = null;
+        let selectedBeach = null;
+        let selectedZone = null;
+        let selectedReport = null;
+        let showForm = false;
+
+        // Estado do formulário
+        let formTitle = '';
+        let formDesc = '';
+        let formCategory = 'LIXO';
+        let formPresetIdx = null;
+        let formSubmitted = false;
+
+        // ============================================================
+        // FUNÇÕES DE RENDERIZAÇÃO
+        // ============================================================
+
+        function getImproperCount() {
+            return beaches.filter(b => b.status === 'IMPROPRIA').length;
+        }
+
+        function renderMap() {
+            const improper = getImproperCount();
+            return `
+                <div class="map-container">
+                    <div style="font-size:32px; margin-bottom:8px;">🗺️</div>
+                    <h3 style="font-weight:bold; margin-bottom:4px;">Mapa Interativo - Recife</h3>
+                    <p style="font-size:12px; color:#6b7280; margin-bottom:12px;">
+                        📍 ${currentLocation.lat.toFixed(4)}°S, ${currentLocation.lng.toFixed(4)}°W
+                    </p>
+                    <div style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-bottom:12px;">
+                        <button onclick="setLocation(-8.0600, -34.9200)" class="btn btn-primary">📍 Recife</button>
+                        <button onclick="setLocation(-8.1300, -34.9030)" class="btn btn-primary">🏖️ Boa Viagem</button>
+                        <button onclick="setLocation(-8.2800, -34.9300)" class="btn btn-primary">🏖️ Paiva</button>
+                        <button onclick="setLocation(-8.1100, -34.8600)" class="btn btn-primary">🏖️ Candeias</button>
+                    </div>
+                    <div style="display:flex; flex-wrap:wrap; gap:4px; justify-content:center; margin-top:8px;">
+                        <span class="badge-success">✅ ${beaches.length - improper} próprias</span>
+                        <span class="badge-danger">❌ ${improper} impróprias</span>
+                        <span class="badge-warning">🛡️ ${zones.length} zonas protegidas</span>
+                        <span class="badge-media">📋 ${reports.length} denúncias</span>
+                    </div>
+                    <div style="margin-top:12px; display:flex; flex-wrap:wrap; gap:6px; justify-content:center;">
+                        <span style="font-size:10px; color:#6b7280;">🌊 Praias:</span>
+                        ${beaches.map(b => `
+                            <span onclick="selectBeach('${b.id}')" style="padding:2px 10px; border-radius:12px; font-size:10px; cursor:pointer; background:${b.status === 'PROPRIA' ? '#d1fae5' : '#fecaca'}; color:${b.status === 'PROPRIA' ? '#059669' : '#dc2626'}; border:1px solid ${b.status === 'PROPRIA' ? '#059669' : '#dc2626'};">
+                                ${b.name}
+                            </span>
+                        `).join('')}
+                    </div>
+                    <div style="margin-top:8px; display:flex; flex-wrap:wrap; gap:6px; justify-content:center;">
+                        <span style="font-size:10px; color:#6b7280;">🛡️ Zonas:</span>
+                        ${zones.map(z => `
+                            <span onclick="selectZone('${z.id}')" style="padding:2px 10px; border-radius:12px; font-size:10px; cursor:pointer; background:#fde68a; color:#78350f; border:1px solid #f59e0b;">
+                                ${z.name}
+                            </span>
+                        `).join('')}
+                    </div>
+                    <div style="margin-top:8px; display:flex; flex-wrap:wrap; gap:6px; justify-content:center;">
+                        <span style="font-size:10px; color:#6b7280;">📋 Denúncias:</span>
+                        ${reports.map(r => `
+                            <span onclick="selectReport('${r.id}')" style="padding:2px 10px; border-radius:12px; font-size:10px; cursor:pointer; background:${r.severity === 'ALTA' ? '#7f1d1d' : '#78350f'}; color:${r.severity === 'ALTA' ? '#fca5a5' : '#fcd34d'}; border:1px solid ${r.severity === 'ALTA' ? '#dc2626' : '#f59e0b'};">
+                                ${r.title}
+                            </span>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderReportForm() {
+            if (formSubmitted) {
+                return `
+                    <div class="text-center" style="padding:20px;">
+                        <div style="font-size:48px;">✅</div>
+                        <h3 style="font-weight:bold; margin-top:8px;">Denúncia Registrada!</h3>
+                        <p style="font-size:13px; color:#6b7280; margin-top:4px;">A triagem automática foi iniciada.</p>
+                        <button onclick="resetForm()" class="btn btn-primary mt-4">Voltar</button>
+                    </div>
+                `;
+            }
+
+            return `
+                <form onsubmit="submitForm(event)">
+                    <div style="margin-bottom:12px;">
+                        <label>📍 Localização</label>
+                        <div style="background:#f3f4f6; padding:8px; border-radius:8px; font-size:12px; font-family:monospace;">
+                            ${currentLocation.lat.toFixed(4)}°S, ${currentLocation.lng.toFixed(4)}°W
+                        </div>
+                    </div>
+                    <div style="margin-bottom:12px;">
+                        <label>📸 Foto Simulada</label>
+                        <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:6px;">
+                            ${presets.map((p, i) => `
+                                <img src="${p.url}" alt="${p.name}" class="preset-img ${formPresetIdx === i ? 'selected' : ''}" onclick="selectPreset(${i})">
+                            `).join('')}
+                        </div>
+                    </div>
+                    <div style="margin-bottom:12px;">
+                        <label>TÍTULO</label>
+                        <input type="text" id="formTitle" value="${formTitle}" placeholder="Ex: Mancha de óleo" required>
+                    </div>
+                    <div style="margin-bottom:12px;">
+                        <label>CATEGORIA</label>
+                        <select id="formCategory">
+                            <option value="LIXO" ${formCategory === 'LIXO' ? 'selected' : ''}>Lixo Plástico</option>
+                            <option value="OLEO" ${formCategory === 'OLEO' ? 'selected' : ''}>Derramamento de Óleo</option>
+                            <option value="ESGOTO" ${formCategory === 'ESGOTO' ? 'selected' : ''}>Esgoto Clandestino</option>
+                            <option value="PESCA_ILEGAL" ${formCategory === 'PESCA_ILEGAL' ? 'selected' : ''}>Pesca Ilegal</option>
+                        </select>
+                    </div>
+                    <div style="margin-bottom:12px;">
+                        <label>DESCRIÇÃO</label>
+                        <textarea id="formDesc" rows="3" placeholder="Descreva o que observou..." required>${formDesc}</textarea>
+                    </div>
+                    <div style="display:flex; gap:8px;">
+                        <button type="submit" class="btn btn-primary" style="flex:1;">📤 Enviar Denúncia</button>
+                        <button type="button" onclick="cancelForm()" class="btn btn-outline">Cancelar</button>
+                    </div>
+                </form>
+            `;
+        }
+
+        function renderAlerts() {
+            const improper = beaches.filter(b => b.status === 'IMPROPRIA');
+            let alertHtml = '';
+            if (improper.length > 0) {
+                alertHtml = `
+                    <div style="background:#fecaca; padding:12px; border-radius:8px; border:1px solid #dc2626; margin-bottom:8px;">
+                        <strong style="color:#dc2626;">⚠️ ${improper.length} praia(s) imprópria(s)</strong>
+                        <p style="font-size:12px; color:#374151;">${improper.map(b => b.name).join(', ')} — Evite banhos.</p>
+                    </div>
+                `;
+            } else {
+                alertHtml = `
+                    <div style="background:#d1fae5; padding:12px; border-radius:8px; border:1px solid #059669; margin-bottom:8px;">
+                        <strong style="color:#059669;">✅ Todas as praias estão próprias!</strong>
+                    </div>
+                `;
+            }
+
+            return `
+                <h3 style="font-weight:bold; margin-bottom:12px;">🔔 Alertas de Preservação</h3>
+                ${alertHtml}
+                <div style="background:#fde68a; padding:12px; border-radius:8px; border:1px solid #f59e0b; margin-top:8px;">
+                    <strong style="color:#78350f;">🌿 Áreas de Proteção</strong>
+                    <p style="font-size:12px; color:#374151;">Estuário do Capibaribe, Reserva de Tamandaré e Mangue de Suape — atividades controladas.</p>
+                </div>
+            `;
+        }
+
+        function renderTabContent() {
+            const el = document.getElementById('tabContent');
+            if (currentTab === 'map') {
+                el.innerHTML = renderMap();
+            } else if (currentTab === 'report') {
+                if (showForm) {
+                    el.innerHTML = renderReportForm();
+                } else {
+                    el.innerHTML = `
+                        <div class="text-center" style="padding:40px 0;">
+                            <div style="font-size:48px;">📷</div>
+                            <h3 style="font-weight:bold; margin-top:8px;">Reportar Denúncia</h3>
+                            <p style="font-size:13px; color:#6b7280;">Clique no botão abaixo para começar</p>
+                            <button onclick="openForm()" class="btn btn-primary mt-4">➕ Nova Denúncia</button>
+                        </div>
+                    `;
+                }
+            } else if (currentTab === 'alerts') {
+                el.innerHTML = renderAlerts();
+            }
+        }
+
+        function renderReportList() {
+            const el = document.getElementById('reportList');
+            el.innerHTML = reports.map(r => `
+                <div class="report-item ${selectedReportId === r.id ? 'selected' : ''}" onclick="selectReport('${r.id}')">
+                    <div class="flex-between">
+                        <div>
+                            <strong style="font-size:13px;">${r.title}</strong>
+                            <div style="font-size:11px; color:#6b7280;">
+                                ${r.category} • <span class="${r.status === 'CONFIRMADO' ? 'badge-success' : r.status === 'RESOLVIDO' ? 'badge-success' : 'badge-warning'}">${r.status}</span>
+                            </div>
+                        </div>
+                        <span class="${r.severity === 'ALTA' ? 'badge-alta' : 'badge-media'}">${r.severity}</span>
+                    </div>
+                </div>
+            `).join('') || '<p style="padding:12px; color:#6b7280; text-align:center;">Nenhum relatório encontrado.</p>';
+        }
+
+        function renderAuditPanel() {
+            const el = document.getElementById('auditPanel');
+            const r = reports.find(rep => rep.id === selectedReportId);
+            if (!r) {
+                el.innerHTML = '<p style="font-size:12px; color:#6b7280; text-align:center; padding:20px 0;">Selecione um relatório para auditoria.</p>';
+                return;
+            }
+            el.innerHTML = `
+                <img src="${r.photo}" style="width:100%; height:100px; object-fit:cover; border-radius:8px; margin-bottom:8px;">
+                <strong style="font-size:14px;">${r.title}</strong>
+                <p style="font-size:12px; color:#374151; margin-top:4px;">${r.desc}</p>
+                <p style="font-size:11px; color:#6b7280; margin-top:4px;">📍 ${r.lat.toFixed(4)}°S, ${r.lng.toFixed(4)}°W</p>
+                <div style="display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;">
+                    <button onclick="updateStatus('${r.id}', 'CONFIRMADO')" class="btn btn-warning">✅ Confirmar</button>
+                    <button onclick="updateStatus('${r.id}', 'RESOLVIDO')" class="btn btn-success">✔️ Resolver</button>
+                    <button onclick="deleteReport('${r.id}')" class="btn btn-danger">🗑️ Remover</button>
+                </div>
+            `;
+        }
+
+        function renderBeachControls() {
+            const el = document.getElementById('beachControls');
+            el.innerHTML = beaches.map(b => `
+                <div onclick="toggleBeach('${b.id}')" class="beach-card ${b.status === 'PROPRIA' ? 'propria' : 'impropria'}">
+                    <div style="font-size:24px;">${b.status === 'PROPRIA' ? '✅' : '❌'}</div>
+                    <div style="font-size:12px; font-weight:bold;">${b.name}</div>
+                    <div style="font-size:10px; color:#6b7280;">${b.ecoli} NMP/100ml</div>
+                    <span class="${b.status === 'PROPRIA' ? 'badge-success' : 'badge-danger'}">${b.status}</span>
+                </div>
+            `).join('');
+        }
+
+        function renderStats() {
+            document.getElementById('statReports').textContent = reports.length;
+            document.getElementById('statImproper').textContent = `${getImproperCount()}/${beaches.length}`;
+            document.getElementById('statImproper').style.color = getImproperCount() > 0 ? '#dc2626' : '#059669';
+        }
+
+        function renderDetails() {
+            const panel = document.getElementById('detailsPanel');
+            const content = document.getElementById('detailsContent');
+
+            if (!selectedBeach && !selectedZone && !selectedReport) {
+                panel.style.display = 'none';
+                return;
+            }
+            panel.style.display = 'block';
+
+            let html = '';
+            if (selectedBeach) {
+                html = `
+                    <h4 style="font-weight:bold;">${selectedBeach.name}</h4>
+                    <p style="font-size:12px; color:#6b7280;">${selectedBeach.city}</p>
+                    <div style="display:flex; gap:8px; margin-top:8px;">
+                        <span class="${selectedBeach.status === 'PROPRIA' ? 'badge-success' : 'badge-danger'}">${selectedBeach.status}</span>
+                        <span class="badge-warning">E.Coli: ${selectedBeach.ecoli} NMP/100ml</span>
+                    </div>
+                `;
+            } else if (selectedZone) {
+                html = `
+                    <h4 style="font-weight:bold;">🛡️ ${selectedZone.name}</h4>
+                    <p style="font-size:12px; color:#374151;">${selectedZone.desc}</p>
+                    <span class="badge-warning">Área de Proteção Integral</span>
+                `;
+            } else if (selectedReport) {
+                html = `
+                    <h4 style="font-weight:bold;">${selectedReport.title}</h4>
+                    <p style="font-size:12px; color:#374151;">${selectedReport.desc}</p>
+                    <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
+                        <span class="${selectedReport.status === 'CONFIRMADO' ? 'badge-success' : 'badge-warning'}">${selectedReport.status}</span>
+                        <span class="${selectedReport.severity === 'ALTA' ? 'badge-alta' : 'badge-media'}">${selectedReport.severity}</span>
+                        <span class="badge-warning">${selectedReport.category}</span>
+                    </div>
+                `;
+            }
+            content.innerHTML = html;
+        }
+
+        // ============================================================
+        // FUNÇÕES DE AÇÃO
+        // ============================================================
+
+        function switchTab(tab) {
+            currentTab = tab;
+            if (tab === 'report') {
+                showForm = false;
+                formSubmitted = false;
+            }
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            if (tab === 'map') document.getElementById('tabMap').classList.add('active');
+            else if (tab === 'report') document.getElementById('tabReport').classList.add('active');
+            else if (tab === 'alerts') document.getElementById('tabAlerts').classList.add('active');
+            renderTabContent();
+        }
+
+        function setLocation(lat, lng) {
+            currentLocation = { lat, lng };
+            renderTabContent();
+            renderStats();
+        }
+
+        function selectBeach(id) {
+            selectedBeach = beaches.find(b => b.id === id) || null;
+            selectedZone = null;
+            selectedReport = null;
+            renderDetails();
+            renderTabContent();
+        }
+
+        function selectZone(id) {
+            selectedZone = zones.find(z => z.id === id) || null;
+            selectedBeach = null;
+            selectedReport = null;
+            renderDetails();
+            renderTabContent();
+        }
+
+        function selectReport(id) {
+            selectedReportId = id;
+            selectedReport = reports.find(r => r.id === id) || null;
+            selectedBeach = null;
+            selectedZone = null;
+            renderReportList();
+            renderAuditPanel();
+            renderDetails();
+            renderTabContent();
+        }
+
+        function clearDetails() {
+            selectedBeach = null;
+            selectedZone = null;
+            selectedReport = null;
+            selectedReportId = null;
+            renderDetails();
+            renderReportList();
+            renderAuditPanel();
+            renderTabContent();
+        }
+
+        function openForm() {
+            showForm = true;
+            formSubmitted = false;
+            renderTabContent();
+        }
+
+        function cancelForm() {
+            showForm = false;
+            formSubmitted = false;
+            formTitle = '';
+            formDesc = '';
+            formCategory = 'LIXO';
+            formPresetIdx = null;
+            renderTabContent();
+        }
+
+        function resetForm() {
+            formSubmitted = false;
+            showForm = false;
+            formTitle = '';
+            formDesc = '';
+            formCategory = 'LIXO';
+            formPresetIdx = null;
+            renderTabContent();
+        }
+
+        function selectPreset(idx) {
+            formPresetIdx = idx;
+            formTitle = presets[idx].name;
+            formDesc = presets[idx].desc;
+            formCategory = presets[idx].category;
+            document.getElementById('formTitle').value = formTitle;
+            document.getElementById('formDesc').value = formDesc;
+            document.getElementById('formCategory').value = formCategory;
+            renderTabContent();
+        }
+
+        function submitForm(e) {
+            e.preventDefault();
+            const title = document.getElementById('formTitle').value;
+            const desc = document.getElementById('formDesc').value;
+            const category = document.getElementById('formCategory').value;
+
+            if (!title || !desc) return;
+
+            const rep = {
+                id: 'r_' + Date.now(),
+                title,
+                category,
+                lat: currentLocation.lat,
+                lng: currentLocation.lng,
+                desc,
+                status: 'ANALISANDO',
+                severity: category === 'OLEO' || category === 'ESGOTO' ? 'ALTA' : 'MEDIA',
+                photo: formPresetIdx !== null ? presets[formPresetIdx].url :
+                    'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=400&q=80'
+            };
+
+            reports = [rep, ...reports];
+            formSubmitted = true;
+            renderTabContent();
+            renderReportList();
+            renderAuditPanel();
+            renderStats();
+            renderTabContent();
+        }
+
+        function updateStatus(id, status) {
+            reports = reports.map(r => r.id === id ? { ...r, status } : r);
+            if (selectedReportId === id) {
+                selectedReport = reports.find(r => r.id === id) || null;
+            }
+            renderReportList();
+            renderAuditPanel();
+            renderDetails();
+            renderStats();
+            renderTabContent();
+        }
+
+        function deleteReport(id) {
+            reports = reports.filter(r => r.id !== id);
+            if (selectedReportId === id) {
+                selectedReportId = null;
+                selectedReport = null;
+            }
+            renderReportList();
+            renderAuditPanel();
+            renderDetails();
+            renderStats();
+            renderTabContent();
+        }
+
+        function toggleBeach(id) {
+            beaches = beaches.map(b =>
+                b.id === id ? { ...b, status: b.status === 'PROPRIA' ? 'IMPROPRIA' : 'PROPRIA' } : b
+            );
+            renderBeachControls();
+            renderStats();
+            renderTabContent();
+            renderDetails();
+        }
+
+        // ============================================================
+        // INICIALIZAÇÃO
+        // ============================================================
+
+        function init() {
+            renderTabContent();
+            renderReportList();
+            renderAuditPanel();
+            renderBeachControls();
+            renderStats();
+            renderDetails();
+        }
+
+        // Iniciar
+        init();
+    </script>
+
+</body>
+</html>
